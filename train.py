@@ -1,14 +1,9 @@
 import torch
-import torch.nn as nn
-import numpy as np
-import torchvision
-from torchvision import datasets, models, transforms
-import matplotlib.pyplot as plt
 import time
 import copy
 
 
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler, device, dataloaders, dataset_sizes, writer, num_epochs=25):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -29,7 +24,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             running_corrects = 0
 
             # Iterate over data.
-            for inputs, labels in dataloaders[phase]:
+            for i, (inputs, labels) in enumerate(dataloaders[phase], 0):              
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
@@ -40,8 +35,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
                     outputs = model(inputs)
-                    _, preds = torch.max(outputs,1)
-                    loss = criterion(outputs,labels)
+                    _, preds = torch.max(outputs, 1)
+                    loss = criterion(outputs, labels)
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
@@ -51,11 +46,22 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
+                
+                if phase == 'train':
+                    writer.add_scalar('training loss',
+                                    running_loss,
+                                    epoch * len(dataloaders[phase]) + i)
+                if phase == 'train':
+                    writer.add_scalar('testing loss',
+                                    running_loss,
+                                    epoch * len(dataloaders[phase]) + i)
+
             if phase == 'train':
                 scheduler.step()
 
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects.double() / dataset_sizes[phase]
+          
 
             print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
 
