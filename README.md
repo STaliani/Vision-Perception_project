@@ -1,4 +1,4 @@
-# Gesture detection for Robot gripper control
+# Gesture recognition for Robot gripper control
 
 The goal of our project is to identify hand gestures in order to control the end effector motion of a robotic arm. The idea is to regulate the closure of the gripper and its final position by reproducing the motion of the hand, and also to command a variety of movements.
 
